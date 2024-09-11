@@ -29,6 +29,7 @@
 
 		pairA = 'hello';
 		pairB = 'world';
+		total = $items.length;
 	};
 
 	const deleteItem = (id: number) => {
@@ -37,7 +38,7 @@
 		});
 	};
 
-	const total = $items.length;
+	let total = $items.length;
 	let cItems = $items;
 	let score = 0;
 	let started = false;
