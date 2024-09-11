@@ -44,12 +44,18 @@
 	let curItem = Math.floor(Math.random() * cItems.length);
 
 	const nextItem = () => {
+		if (!$items) {
+			return;
+		}
+
 		cItems = cItems.filter((item: any) => item.id !== cItems[curItem].id);
 		curItem = Math.floor(Math.random() * cItems.length);
 		current++;
 
 		if (!cItems.length) {
-			alert('Quiz completed');
+			toast.success('Quiz completed', {
+				position: 'top-right'
+			});
 			restart();
 			return;
 		}
@@ -69,9 +75,11 @@
 				highScore.set(score);
 			}
 
-			toast('Correct');
+			toast.success('Correct');
 		} else {
-			toast('Incorrect');
+			toast.error('Incorrect', {
+				description: cItems[curItem].b
+			});
 		}
 		nextItem();
 		answer = '';
@@ -98,6 +106,13 @@
 
 		cItems = [...cItems];
 	};
+
+	const truncateText = (text: string, maxLength: number = 20) => {
+		if (text.length > maxLength) {
+			return text.substring(0, maxLength) + '...';
+		}
+		return text;
+	};
 </script>
 
 <Tabs.Root value="setup" class="w-full h-[80%]">
@@ -115,8 +130,8 @@
 				{:else}
 					{#each $items as i}
 						<div class="flex justify-between">
-							<div class="text-center">{i.a}</div>
-							<div class="text-center">{i.b}</div>
+							<div class="text-center">{truncateText(i.a, 20)}</div>
+							<div class="text-center">{truncateText(i.b, 20)}</div>
 							<Button variant="destructive" class="w-16" on:click={() => deleteItem(i.id)}
 								>Delete</Button
 							>
@@ -237,7 +252,17 @@
 					<Label for="flip" class="text-xl">Flip</Label>
 				</div>
 			{:else}
-				<Button class="w-14" on:click={() => (started = !started)}>Start</Button>
+				<Button
+					class="w-14"
+					on:click={() => {
+						if (!$items.length) {
+							toast.error('No items');
+							return;
+						} else {
+							started = true;
+						}
+					}}>Start</Button
+				>
 			{/if}
 		</div></Tabs.Content
 	>
