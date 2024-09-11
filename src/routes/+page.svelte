@@ -5,14 +5,17 @@
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { items } from '$lib/stores';
+	import { items, highScore } from '$lib/stores';
 
 	let pairA: string = 'hello';
 	let pairB: string = 'world';
 	let answer: string = '';
 	let importData: string = '';
+	let flipped: boolean = false;
+	let current: number = 1;
 
 	const addItem = () => {
 		items.update((items) => {
@@ -41,24 +44,37 @@
 	let curItem = Math.floor(Math.random() * cItems.length);
 
 	const nextItem = () => {
-		if (score === total) {
+		cItems = cItems.filter((item: any) => item.id !== cItems[curItem].id);
+		curItem = Math.floor(Math.random() * cItems.length);
+		current++;
+
+		if (!cItems.length) {
 			alert('Quiz completed');
 			restart();
 			return;
 		}
-
-		cItems = cItems.filter((item: any) => item.id !== cItems[curItem].id);
-		curItem = Math.floor(Math.random() * cItems.length);
 	};
 
 	const onKeyDown = (e: KeyboardEvent) => {
 		if (e.key === 'Enter') {
-			if (answer.toLowerCase() === cItems[curItem].b.toLowerCase()) {
-				score++;
-			}
-			nextItem();
-			answer = '';
+			submit();
 		}
+	};
+
+	const submit = () => {
+		if (cItems.length && answer.toLowerCase() === cItems[curItem].b.toLowerCase()) {
+			score++;
+
+			if (score > $highScore) {
+				highScore.set(score);
+			}
+
+			toast('Correct');
+		} else {
+			toast('Incorrect');
+		}
+		nextItem();
+		answer = '';
 	};
 
 	const restart = () => {
@@ -66,6 +82,21 @@
 		cItems = $items;
 		curItem = Math.floor(Math.random() * cItems.length);
 		started = false;
+		current = 0;
+	};
+
+	const flip = () => {
+		if (!cItems.length) {
+			return;
+		}
+
+		cItems.forEach((item: any) => {
+			let temp = item.a;
+			item.a = item.b;
+			item.b = temp;
+		});
+
+		cItems = [...cItems];
 	};
 </script>
 
@@ -185,7 +216,8 @@
 		><div class="flex flex-col gap-4 items-center h-full">
 			<div class="flex flex-col h-full justify-center items-center">
 				<h1 class="text-7xl">Score: {score}</h1>
-				<h1>Total Items: {total}</h1>
+				<h1 class="text-muted-foreground">High Score: {$highScore}</h1>
+				<h1>Question: {current}/{total}</h1>
 			</div>
 			{#if started}
 				<div class="h-72 w-[80%] flex flex-col justify-evenly">
@@ -195,6 +227,14 @@
 				<div class="flex gap-2">
 					<Button class="w-14" on:click={restart}>Restart</Button>
 					<Button class="w-14" on:click={nextItem}>Skip</Button>
+					<Button class="w-14" on:click={submit}>Submit</Button>
+					<Checkbox
+						id="flip"
+						bind:checked={flipped}
+						on:click={flip}
+						class="w-12 h-10 flex justify-center items-center"
+					/>
+					<Label for="flip" class="text-xl">Flip</Label>
 				</div>
 			{:else}
 				<Button class="w-14" on:click={() => (started = !started)}>Start</Button>
