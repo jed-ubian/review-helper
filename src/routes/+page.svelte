@@ -154,7 +154,20 @@
 									type="submit"
 									on:click={() => {
 										try {
-											$items = JSON.parse(importData);
+											let data = JSON.parse(importData);
+
+											for (let i = 0; i < data.length; i++) {
+												console.log(data[i]);
+												items.update((items) => {
+													items.push({
+														id: items.length + 1,
+														a: data[i].a,
+														b: data[i].b
+													});
+													return items;
+												});
+											}
+
 											toast.success('Imported successfully');
 										} catch {
 											toast.error('Invalid JSON');
