@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { toast } from 'svelte-sonner';
@@ -16,6 +17,7 @@
 	let importData: string = '';
 	let flipped: boolean = false;
 	let current: number = 1;
+	let truncationLevel: number = 20;
 
 	const addItem = () => {
 		items.update((items) => {
@@ -114,6 +116,25 @@
 		}
 		return text;
 	};
+
+	function updateTruncationLevel() {
+		const width = window.innerWidth;
+
+		if (width < 768) {
+			truncationLevel = 13;
+		} else {
+			truncationLevel = 25;
+		}
+	}
+
+	onMount(() => {
+		updateTruncationLevel();
+
+		window.addEventListener('resize', updateTruncationLevel);
+		return () => {
+			window.removeEventListener('resize', updateTruncationLevel);
+		};
+	});
 </script>
 
 <Tabs.Root value="setup" class="w-full h-[80%]">
@@ -123,7 +144,7 @@
 	</Tabs.List>
 	<Tabs.Content value="setup" class="h-full">
 		<div class="h-full flex flex-col gap-2 justify-center items-center">
-			<ScrollArea class="w-[60%] h-[80%] border rounded-sm p-4">
+			<ScrollArea class="w-full md:w-[60%] h-[80%] border rounded-sm p-4">
 				{#if !$items.length}
 					<div class="h-[80%] flex justify-center items-center">
 						<p class="text-lg text-gray-500">No items</p>
@@ -131,8 +152,8 @@
 				{:else}
 					{#each $items as i}
 						<div class="flex justify-between">
-							<div class="text-center">{truncateText(i.a, 20)}</div>
-							<div class="text-center">{truncateText(i.b, 20)}</div>
+							<div class="w-28 md:w-52">{truncateText(i.a, truncationLevel)}</div>
+							<div class="w-28 md:w-52">{truncateText(i.b, truncationLevel)}</div>
 							<Button variant="destructive" class="w-16" on:click={() => deleteItem(i.id)}
 								>Delete</Button
 							>
@@ -231,13 +252,15 @@
 	<Tabs.Content value="quiz"
 		><div class="flex flex-col gap-4 items-center h-full">
 			<div class="flex flex-col h-full justify-center items-center">
-				<h1 class="text-7xl">Score: {score}</h1>
+				<h1 class="text-4xl">Score: {score}</h1>
 				<h1 class="text-muted-foreground">High Score: {$highScore}</h1>
 				<h1>Question: {current}/{total}</h1>
 			</div>
 			{#if started}
-				<div class="h-72 w-[80%] flex flex-col justify-evenly">
-					<h1 class="text-4xl">{cItems[curItem].a}</h1>
+				<div class="h-72 w-[80%] flex gap-4 flex-col justify-evenly pt-20">
+					<ScrollArea class="h-full">
+						<h1 class="text-2xl md:text-4xl">{cItems[curItem].a}</h1>
+					</ScrollArea>
 					<Input bind:value={answer} on:keydown={onKeyDown} class="w-full" />
 				</div>
 				<div class="flex gap-2">
